@@ -10,6 +10,7 @@ from app.schemas.product import (
     ProductCreate,
     ProductResponse,
 )
+from fastapi import Query
 
 router = APIRouter(
     prefix="/products",
@@ -52,11 +53,48 @@ def create_product(
     "/",
     response_model=list[ProductResponse]
 )
+
+@router.get(
+    "/",
+    response_model=list[ProductResponse]
+)
 def list_products(
+    search: str | None = None,
+    category_id: int | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=10, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
-    return db.query(Product).all()
+    query = db.query(Product)
 
+    if search:
+        query = query.filter(
+            Product.name.ilike(f"%{search}%")
+        )
+
+    if category_id:
+        query = query.filter(
+            Product.category_id == category_id
+        )
+
+    if min_price is not None:
+        query = query.filter(
+            Product.price >= min_price
+        )
+
+    if max_price is not None:
+        query = query.filter(
+            Product.price <= max_price
+        )
+
+    return (
+        query
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 @router.get(

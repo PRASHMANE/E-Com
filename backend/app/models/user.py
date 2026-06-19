@@ -1,10 +1,9 @@
-from sqlalchemy import Boolean
-from sqlalchemy import String
-
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
+from sqlalchemy import Boolean, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class User(Base):
@@ -27,6 +26,11 @@ class User(Base):
         nullable=False
     )
 
+    role: Mapped[str] = mapped_column(
+        String,
+        default="customer"
+    )
+
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True
@@ -35,4 +39,16 @@ class User(Base):
     is_verified: Mapped[bool] = mapped_column(
         Boolean,
         default=False
+    )
+
+
+class UserResponse(BaseModel):
+    id: int
+    email: EmailStr
+    role: str
+    is_active: bool
+    is_verified: bool
+
+    model_config = ConfigDict(
+        from_attributes=True
     )
